@@ -1,5 +1,6 @@
 //jshint esversion:6
 require('dotenv').config();
+const md5 = require('md5');
 const express = require('express');
 const bodyParser=require('body-parser');
 const ejs = require('ejs');
@@ -15,7 +16,6 @@ const userSchema = new mongoose.Schema({
   email:String,
   password:String
 });
-userSchema.plugin(encrypt,{secret:process.env.SECRET, encryptedFields:["password"]});
 
 const user = new mongoose.model('user',userSchema)
 
@@ -36,7 +36,7 @@ app.route("/register")
       if(!data){
         const newUser = new user({
           email:req.body.username,
-          password:req.body.password
+          password:md5(req.body.password)
         })
         newUser.save().then(res.render("secrets"));
       }else{console.log('Already a user').then(res.render("secrets"))}
@@ -48,10 +48,11 @@ app.route("/login")
     res.render("login")
   })
   .post(function(req,res){
+    console.log(md5(req.body.password))
     user.findOne({email:req.body.username}).then(function(data){
       if(!data){console.log('not a user')}
       else{
-        if(data.password === req.body.password){
+        if(data.password === md5(req.body.password)){
           res.render("secrets");
         }else{console.log('incorrect password')}
       }
